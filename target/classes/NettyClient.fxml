@@ -103,6 +103,7 @@
                                <MenuItem mnemonicParsing="false" text="Send to client" />
                                <MenuItem mnemonicParsing="false" text="Create txt file" />
                                <MenuItem mnemonicParsing="false" text="Create directory" />
+                               <MenuItem mnemonicParsing="false" text="Delete" onAction="#deleteServerFile"/>
                            </items>
                        </ContextMenu>
                    </contextMenu></TreeView>
