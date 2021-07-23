@@ -9,5 +9,7 @@ public enum CommandType {
     RENAME_REQUEST,
     PATH_UP,
     PATH_RESPONSE,
+    FOCUS_RESPONSE,
+    FOCUS_REQUEST,
     PATH_IN_REQUEST
 }

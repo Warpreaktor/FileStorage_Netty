@@ -2,14 +2,14 @@ package ServerSide.Commands;
 
 public class FileRequest extends AbstractCommand {
 
-    private final String name;
+    private final String fileName;
 
-    public FileRequest(String name) {
-        this.name = name;
+    public FileRequest(String fileName) {
+        this.fileName = fileName;
     }
 
-    public String getName() {
-        return name;
+    public String getFileName() {
+        return fileName;
     }
 
     @Override

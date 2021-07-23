@@ -7,6 +7,9 @@ import java.nio.file.Path;
 import lombok.Getter;
 import lombok.ToString;
 
+/**
+ * Команда для передачи файлов.
+ */
 @ToString
 @Getter
 public class FileMessage extends AbstractCommand {

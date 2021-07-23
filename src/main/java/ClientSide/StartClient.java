@@ -15,7 +15,6 @@ public class StartClient extends Application {
         primaryStage.setTitle("W File Storage");
         primaryStage.setScene(new Scene(root, 700, 600));
         primaryStage.show();
-        //fhggdfh
     }
 
 

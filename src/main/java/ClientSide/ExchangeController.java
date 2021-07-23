@@ -1,9 +1,6 @@
 package ClientSide;
 
-import ServerSide.Commands.AbstractCommand;
-import ServerSide.Commands.FileMessage;
-import ServerSide.Commands.ListResponse;
-import ServerSide.Commands.PathUpResponse;
+import ServerSide.Commands.*;
 import io.netty.handler.codec.serialization.ObjectDecoderInputStream;
 import io.netty.handler.codec.serialization.ObjectEncoderOutputStream;
 import javafx.application.Platform;
@@ -26,7 +23,6 @@ import java.io.*;
 import java.net.Socket;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -52,7 +48,7 @@ public class ExchangeController implements Initializable {
     @FXML
     Button connectBut;
     String serverRootPath;
-    Path serverOpenPath;
+    TreeItem<File> serverFocusedFileView;
 
     //Контекстное меню
     @FXML
@@ -63,6 +59,8 @@ public class ExchangeController implements Initializable {
     MenuItem sendFileToServer;
     @FXML
     MenuItem createFolder;
+    @FXML
+    MenuItem deleteServerFile;
 
     Socket socket;
 
@@ -72,10 +70,6 @@ public class ExchangeController implements Initializable {
     //Обмен командами
     ObjectEncoderOutputStream os;
     ObjectDecoderInputStream is;
-
-    //Обмен текстовыми командами
-    DataInputStream dis;
-    DataOutputStream dos;
 
     //Обмен байтами
     BufferedInputStream bis;
@@ -91,7 +85,6 @@ public class ExchangeController implements Initializable {
 
         //Настройки корневого каталога
         clientFileTree.getRoot().setExpanded(true);
-        //serverFileTree.getRoot().setExpanded(true);
 
         //Настройка ивентов с мышью
         createTxtFile.setOnAction(new EventHandler<ActionEvent>() {
@@ -116,8 +109,8 @@ public class ExchangeController implements Initializable {
                 File clientFile = clientFileTree.getSelectionModel().getSelectedItems().get(0).getValue().getAbsoluteFile();
                 os.writeObject(new FileMessage(Paths.get(clientFile.getAbsolutePath())));
                 os.flush();
-                Platform.runLater(() -> serverFileTree.setRoot(buildFileSystemBrowser(serverRootPath).getRoot()));
-                serverFileTree.getRoot().setExpanded(true);
+                updateServFileTreeDir(serverFocusedFileView.getValue().getParent());
+                System.out.println(serverFocusedFileView.getValue().getParent());;
             }
         });
 
@@ -133,9 +126,48 @@ public class ExchangeController implements Initializable {
         serverFileTree.setOnMouseClicked(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent mouseEvent) {
-                serverOpenPath = Paths.get(serverFileTree.getFocusModel().getFocusedItem().getValue().toURI());
+                refreshServFocused();
             }
         });
+    }
+    //TODO сделать так, что обновлялась только та директория, в которой произошло изменение.
+    public void updateServFileTreeDir(String dirName) {
+        Platform.runLater(() -> {
+            serverFileTree.setRoot(buildFileSystemBrowser(serverRootPath).getRoot());
+            serverFileTree.getRoot().setExpanded(true);
+        });
+    }
+
+    public void updateServFileTreeFull() {
+        TreeItem<File> selected = serverFileTree.getSelectionModel().getSelectedItem();
+        TreeItem<File> upLevel = selected.getParent();
+        Platform.runLater(() -> {
+            serverFileTree.setRoot(buildFileSystemBrowser(serverRootPath).getRoot());
+            serverFileTree.getRoot().setExpanded(true);
+        });
+    }
+
+    private void expandAllParent() {
+        //TODO сделать метод который мог бы вернуть все открытые директории после полного обновления дерева
+    }
+
+    public void deleteServerFile() {
+        refreshServFocused();
+        try {
+            os.writeObject(new DeleteRequest(serverFocusedFileView.getValue().getAbsolutePath()));
+            updateServFileTreeDir(serverFocusedFileView.getValue().getParent());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void refreshServFocused() {
+        try {
+            serverFocusedFileView = serverFileTree.getSelectionModel().getSelectedItem();
+            os.writeObject(new FocusResponse(serverFocusedFileView.getValue().getAbsolutePath()));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void consoleCommand() {
@@ -186,8 +218,10 @@ public class ExchangeController implements Initializable {
                             case PATH_RESPONSE:
                                 PathUpResponse pathResponse = (PathUpResponse) command;
                                 serverRootPath = pathResponse.getPath();
-                                System.out.println("Client got the Path " + pathResponse);
-                                Platform.runLater(() -> serverFileTree.setRoot(buildFileSystemBrowser(serverRootPath).getRoot()));
+                                Platform.runLater(() -> {
+                                    serverFileTree.setRoot(buildFileSystemBrowser(serverRootPath).getRoot());
+                                    serverFocusedFileView = serverFileTree.getRoot();
+                                });
                                 break;
                             case FILE_MESSAGE:
                                 FileMessage message = (FileMessage) command;
@@ -223,9 +257,9 @@ public class ExchangeController implements Initializable {
             private void setPicture(TreeItem<File> treeItem) {
                 ImageView imageView;
                 if (treeItem.getValue().isDirectory()) {
-                   imageView = new ImageView(new Image("directory.png"));
+                    imageView = new ImageView(new Image("directory.png"));
                 } else {
-                   imageView = new ImageView(new Image("file.png"));
+                    imageView = new ImageView(new Image("file.png"));
                 }
                 imageView.setFitWidth(15);
                 imageView.setFitHeight(15);
