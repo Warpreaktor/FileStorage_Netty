@@ -23,6 +23,8 @@ import java.io.*;
 import java.net.Socket;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -63,6 +65,7 @@ public class ExchangeController implements Initializable {
     MenuItem deleteServerFile;
 
     Socket socket;
+    int bufferSize = 1024;
 
     private String ipAddress = "localhost";
     int port = 8189;
@@ -107,10 +110,21 @@ public class ExchangeController implements Initializable {
                 //TODO Обработать здесь так же и вариант при котором пользователь выбирает
                 // несколько файлов, должны отправляться все.
                 File clientFile = clientFileTree.getSelectionModel().getSelectedItems().get(0).getValue().getAbsoluteFile();
-                os.writeObject(new FileMessage(Paths.get(clientFile.getAbsolutePath())));
-                os.flush();
+                //os.writeObject(new FileMessage(Paths.get(clientFile.getAbsolutePath())));
+                try(FileInputStream fis = new FileInputStream(clientFile)){
+                    os.writeObject(new FilePart(Paths.get(clientFile.getAbsolutePath()), true, false, fis.readNBytes(bufferSize)));
+                    while (fis.available() > 0){
+                        os.writeObject(new FilePart(Paths.get(clientFile.getAbsolutePath()), false, false, fis.readNBytes(bufferSize)));
+                        if (fis.available() <= bufferSize){
+                            os.writeObject(new FilePart(Paths.get(clientFile.getAbsolutePath()), false, true, fis.readNBytes(fis.available())));
+                            os.flush();
+                        }
+                    }
+                }
+                catch (IOException except){
+                    except.printStackTrace();
+                }
                 updateServFileTreeDir(serverFocusedFileView.getValue().getParent());
-                System.out.println(serverFocusedFileView.getValue().getParent());;
             }
         });
 
@@ -162,6 +176,7 @@ public class ExchangeController implements Initializable {
     }
 
     private void refreshServFocused() {
+        if (serverFileTree.getSelectionModel().getSelectedItem() == null) return;
         try {
             serverFocusedFileView = serverFileTree.getSelectionModel().getSelectedItem();
             os.writeObject(new FocusResponse(serverFocusedFileView.getValue().getAbsolutePath()));
@@ -181,7 +196,6 @@ public class ExchangeController implements Initializable {
             e.printStackTrace();
         }
     }
-
 
     public void connectButton() {
 

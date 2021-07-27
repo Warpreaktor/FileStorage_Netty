@@ -3,6 +3,7 @@ package ServerSide;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 
 import ServerSide.Commands.*;
 import io.netty.channel.ChannelHandlerContext;
@@ -15,8 +16,10 @@ public class MessageHandler extends SimpleChannelInboundHandler<AbstractCommand>
     private Path currentPath;
     //TODO Нужно сделать тут массив с именами файлов, так как пользователь может выделить сразу несколько файлов.
     private String currentFocus; // Информация о том, какой конкретно файл сейчас выделен у пользователя
+    private final byte[] buffer;
 
     public MessageHandler() {
+        buffer = new byte[1024];
         currentPath = Paths.get("O:\\Tests");
         currentFocus = currentPath.toAbsolutePath().toString();
     }
@@ -37,8 +40,8 @@ public class MessageHandler extends SimpleChannelInboundHandler<AbstractCommand>
                 ctx.writeAndFlush(msg);
                 break;
             case FILE_MESSAGE:
-                FileMessage message = (FileMessage) command;
-                Files.write(Path.of(currentFocus).resolve(message.getName()), message.getData());
+                FileMessage fileMessage = (FileMessage) command;
+                Files.write(Path.of(currentFocus).resolve(fileMessage.getName()), fileMessage.getData());
                 break;
             case DELETE_REQUEST:
                 if(Files.isDirectory(Path.of(currentFocus))){
@@ -51,24 +54,19 @@ public class MessageHandler extends SimpleChannelInboundHandler<AbstractCommand>
                 FocusResponse focus = (FocusResponse) command;
                 currentFocus = focus.getFileName();
                 break;
-/*            case PATH_IN_REQUEST:
-                PathInRequest request = (PathInRequest) command;
-                Path newPath = currentPath.resolve(request.getDir());
-                if (Files.isDirectory(newPath)) {
-                    currentPath = newPath;
-                    ctx.writeAndFlush(new PathUpResponse(currentPath.toString()));
-                    ctx.writeAndFlush(new ListResponse(currentPath));
+            case FILE_PART: //передача файлов частями
+                //TODO реализовать передачу файлов через буфер с возможностью передавать большие файлы.
+                FilePart filePart = (FilePart) command;
+                if (filePart.isBegin()){
+                    Files.write(Path.of(currentFocus).resolve(filePart.getName()), filePart.getData());
+                }
+                if (!filePart.isBegin() && !filePart.isEnd()){
+                    Files.write(Path.of(currentFocus).resolve(filePart.getName()), filePart.getData(), StandardOpenOption.APPEND);
+                }
+                if (filePart.isEnd()){
+                    Files.write(Path.of(currentFocus).resolve(filePart.getName()), filePart.getData(), StandardOpenOption.APPEND);
                 }
                 break;
-            case PATH_UP:
-                if (currentPath.getParent() != null) {
-                    currentPath = currentPath.getParent();
-                }
-                ctx.writeAndFlush(new PathUpResponse(currentPath.toString()));
-                ctx.writeAndFlush(new ListResponse(currentPath));
-                break;
-
- */
         }
     }
 }

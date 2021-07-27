@@ -3,6 +3,7 @@ package ServerSide.Commands;
 public enum CommandType {
     FILE_REQUEST,
     FILE_MESSAGE,
+    FILE_PART,
     LIST_REQUEST,
     LIST_MESSAGE,
     DELETE_REQUEST,
