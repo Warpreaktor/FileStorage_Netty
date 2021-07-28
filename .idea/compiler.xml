@@ -7,8 +7,13 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="FileStorage_Netty" />
+        <module name="filestorage-core" />
+        <module name="filestorage-client" />
+        <module name="filestorage-server" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="server" target="16" />
+    </bytecodeTargetLevel>
   </component>
 </project>
