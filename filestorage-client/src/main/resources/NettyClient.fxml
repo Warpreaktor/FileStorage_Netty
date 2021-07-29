@@ -94,7 +94,7 @@
                                      <MenuItem mnemonicParsing="false" text="Copy to client" />
                                      <MenuItem mnemonicParsing="false" text="Send to client" />
                                      <MenuItem mnemonicParsing="false" text="Create txt file" />
-                                     <MenuItem mnemonicParsing="false" onAction="#createServerFolder" text="Create directory" />
+                                     <MenuItem mnemonicParsing="false" onAction="#createServerFolder" text="Create folder" />
                                      <MenuItem mnemonicParsing="false" onAction="#deleteServerFile" text="Delete" />
                                  </items>
                              </ContextMenu>

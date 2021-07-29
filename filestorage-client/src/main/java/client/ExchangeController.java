@@ -308,19 +308,6 @@ public class ExchangeController implements Initializable {
         });
     }
 
-    public void updateServFileTreeFull() {
-        TreeItem<File> selected = serverFileTree.getSelectionModel().getSelectedItem();
-        TreeItem<File> upLevel = selected.getParent();
-        Platform.runLater(() -> {
-            serverFileTree.setRoot(buildFileSystemBrowser(serverRootPath).getRoot());
-            serverFileTree.getRoot().setExpanded(true);
-        });
-    }
-
-    private void expandAllParent() {
-        //TODO сделать метод который мог бы вернуть все открытые директории после полного обновления дерева
-    }
-
     public void deleteServerFile() {
         refreshServFocused();
         try {
