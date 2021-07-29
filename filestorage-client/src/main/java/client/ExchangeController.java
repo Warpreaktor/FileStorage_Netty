@@ -28,6 +28,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Date;
 import java.util.List;
 import java.util.ResourceBundle;
 
@@ -141,15 +142,23 @@ public class ExchangeController implements Initializable {
                 //TODO Обработать здесь так же и вариант при котором пользователь выбирает
                 // несколько файлов, должны отправляться все.
                 File clientFile = clientFileTree.getSelectionModel().getSelectedItems().get(0).getValue().getAbsoluteFile();
-                try (FileInputStream fis = new FileInputStream(clientFile)) {
-                    os.writeObject(new FilePart(Paths.get(clientFile.getAbsolutePath()), true, false, fis.readNBytes(bufferSize)));
-                    while (fis.available() > 0) {
-                        os.writeObject(new FilePart(Paths.get(clientFile.getAbsolutePath()), false, false, fis.readNBytes(bufferSize)));
-                        if (fis.available() <= bufferSize) {
-                            os.writeObject(new FilePart(Paths.get(clientFile.getAbsolutePath()), false, true, fis.readNBytes(fis.available())));
+                try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(clientFile), bufferSize)) {
+                    byte[] rd = bis.readNBytes(bufferSize);
+                    os.writeObject(new FilePart(Paths.get(clientFile.getAbsolutePath()), true, false, rd));
+                    while (true) {
+                        rd = bis.readNBytes(bufferSize);
+                        if (rd.length < 1){
+                            break;
+                        }
+                        os.writeObject(new FilePart(Paths.get(clientFile.getAbsolutePath()), false, false, rd));
+                        if (rd.length <= bufferSize) {
+                            os.writeObject(new FilePart(Paths.get(clientFile.getAbsolutePath()), false, true, rd));
                             os.flush();
+                            break;
                         }
                     }
+
+
                 } catch (IOException except) {
                     except.printStackTrace();
                 }

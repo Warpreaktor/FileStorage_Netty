@@ -58,6 +58,7 @@ public class MessageHandler extends SimpleChannelInboundHandler<AbstractCommand>
             case FILE_PART: //передача файлов частями
                 //TODO реализовать передачу файлов через буфер с возможностью передавать большие файлы.
                 FilePart filePart = (FilePart) command;
+                System.out.println(filePart.getData().length);
                 if (filePart.isBegin()){
                     Files.write(Path.of(currentFocus).resolve(filePart.getName()), filePart.getData());
                 }
