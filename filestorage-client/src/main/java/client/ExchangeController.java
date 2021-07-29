@@ -81,7 +81,7 @@ public class ExchangeController implements Initializable {
     MenuItem deleteServerFile;
 
     Socket socket;
-    int bufferSize = 1024;
+    int bufferSize = 1024000;
 
     private String ipAddress = "localhost";
     int port = 8189;
@@ -148,17 +148,17 @@ public class ExchangeController implements Initializable {
                     while (true) {
                         rd = bis.readNBytes(bufferSize);
                         if (rd.length < 1){
-                            break;
-                        }
-                        os.writeObject(new FilePart(Paths.get(clientFile.getAbsolutePath()), false, false, rd));
-                        if (rd.length <= bufferSize) {
                             os.writeObject(new FilePart(Paths.get(clientFile.getAbsolutePath()), false, true, rd));
                             os.flush();
                             break;
                         }
+                        if (rd.length < bufferSize) {
+                            os.writeObject(new FilePart(Paths.get(clientFile.getAbsolutePath()), false, true, rd));
+                            os.flush();
+                            break;
+                        }
+                        os.writeObject(new FilePart(Paths.get(clientFile.getAbsolutePath()), false, false, rd));
                     }
-
-
                 } catch (IOException except) {
                     except.printStackTrace();
                 }
@@ -419,6 +419,11 @@ public class ExchangeController implements Initializable {
             private boolean isFirstTimeChildren = true;
             private boolean isFirstTimeLeaf = true;
 
+            @Override
+            public String toString() {
+                return this.getValue().getName();
+            }
+
             private void setPicture(TreeItem<File> treeItem) {
                 ImageView imageView;
                 if (treeItem.getValue().isDirectory()) {
@@ -459,7 +464,6 @@ public class ExchangeController implements Initializable {
                         for (File childFile : files) {
                             TreeItem<File> node = createNode(childFile);
                             children.add(node);
-                            setPicture(node);
                             Platform.runLater(new Runnable() {
                                 @Override
                                 public void run() {
