@@ -12,5 +12,6 @@ public enum CommandType {
     PATH_RESPONSE,
     FOCUS_RESPONSE,
     FOCUS_REQUEST,
-    PATH_IN_REQUEST
+    PATH_IN_REQUEST,
+    CREATE_DIRECTORY
 }

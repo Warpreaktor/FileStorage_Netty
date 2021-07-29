@@ -68,6 +68,11 @@ public class MessageHandler extends SimpleChannelInboundHandler<AbstractCommand>
                     Files.write(Path.of(currentFocus).resolve(filePart.getName()), filePart.getData(), StandardOpenOption.APPEND);
                 }
                 break;
+            case CREATE_DIRECTORY:
+                CreateDirectory createDirectory = (CreateDirectory) command;
+                Files.createDirectory(Path.of(createDirectory.getName()));
+                break;
+
         }
     }
 }

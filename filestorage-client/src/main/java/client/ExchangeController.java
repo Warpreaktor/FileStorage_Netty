@@ -16,6 +16,8 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.VBox;
 import lombok.SneakyThrows;
 import javafx.scene.control.TextField;
 
@@ -24,12 +26,25 @@ import java.net.Socket;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.ResourceBundle;
 
 public class ExchangeController implements Initializable {
-    //Окно файлового менеджера
+    //Общие компоненты приложения
+    @FXML
+    AnchorPane mainPane;
+    @FXML
+    VBox mainBox;
+    @FXML
+    DialogPane createFolderDialog;
+    @FXML
+    TextField textField;
+
+    private double mouseX;
+    private double mouseY;
+    //Окно файлового менеджера клиента
     @FXML
     TreeView<File> clientFileTree;
     @FXML
@@ -38,6 +53,7 @@ public class ExchangeController implements Initializable {
     ContextMenu leftContextMenu;
     @FXML
     ContextMenu rightContextMenu;
+    TreeItem<File> clientFileTreeFocus;
 
     //Серверная панель
     @FXML
@@ -49,7 +65,7 @@ public class ExchangeController implements Initializable {
     @FXML
     Button connectBut;
     String serverRootPath; //корневая папка на сервере выше которой клиенту ничего не доступно.
-    TreeItem<File> serverFocusedFileView; //текущий файл на сервере в котором сфокусирован пользователь
+    TreeItem<File> serverFileTreeFocus; //текущий файл на сервере в котором сфокусирован пользователь
 
     //Контекстное меню
     @FXML
@@ -80,6 +96,7 @@ public class ExchangeController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         clientFileTree.setRoot(buildFileSystemBrowser("/").getRoot());
+        clientFileTreeFocus = clientFileTree.getRoot();
 
         //Позволяет выбирать несколько файлов
         clientFileTree.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
@@ -89,6 +106,21 @@ public class ExchangeController implements Initializable {
         clientFileTree.getRoot().setExpanded(true);
 
         //Настройка ивентов с мышью
+        clientFileTree.setOnMouseMoved(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent mouseEvent) {
+                mouseX = mouseEvent.getX();
+                mouseY = mouseEvent.getY();
+            }
+        });
+        serverFileTree.setOnMouseMoved(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent mouseEvent) {
+                mouseX = mouseEvent.getX();
+                mouseY = mouseEvent.getY();
+            }
+        });
+
         createTxtFile.setOnAction(new EventHandler<ActionEvent>() {
             public void handle(ActionEvent e) {
                 String path = clientFileTree.getSelectionModel().getSelectedItems().get(0).getValue().getParent();
@@ -109,21 +141,19 @@ public class ExchangeController implements Initializable {
                 //TODO Обработать здесь так же и вариант при котором пользователь выбирает
                 // несколько файлов, должны отправляться все.
                 File clientFile = clientFileTree.getSelectionModel().getSelectedItems().get(0).getValue().getAbsoluteFile();
-                //os.writeObject(new FileMessage(Paths.get(clientFile.getAbsolutePath())));
-                try(FileInputStream fis = new FileInputStream(clientFile)){
+                try (FileInputStream fis = new FileInputStream(clientFile)) {
                     os.writeObject(new FilePart(Paths.get(clientFile.getAbsolutePath()), true, false, fis.readNBytes(bufferSize)));
-                    while (fis.available() > 0){
+                    while (fis.available() > 0) {
                         os.writeObject(new FilePart(Paths.get(clientFile.getAbsolutePath()), false, false, fis.readNBytes(bufferSize)));
-                        if (fis.available() <= bufferSize){
+                        if (fis.available() <= bufferSize) {
                             os.writeObject(new FilePart(Paths.get(clientFile.getAbsolutePath()), false, true, fis.readNBytes(fis.available())));
                             os.flush();
                         }
                     }
-                }
-                catch (IOException except){
+                } catch (IOException except) {
                     except.printStackTrace();
                 }
-                updateServFileTreeDir(serverFocusedFileView.getValue().getParent());
+                updateServFileTreeDir(serverFileTreeFocus.getValue().getParent());
             }
         });
 
@@ -133,16 +163,24 @@ public class ExchangeController implements Initializable {
                 if (mouseEvent.getButton() == MouseButton.SECONDARY) {
                     leftContextMenu.show(clientFileTree, Side.BOTTOM, mouseEvent.getY(), mouseEvent.getX());
                 }
+                if (mouseEvent.getButton() == MouseButton.PRIMARY &&
+                        clientFileTree.getSelectionModel().getSelectedItem() != null) {
+                    clientFileTreeFocus = clientFileTree.getSelectionModel().getSelectedItem();
+                }
             }
         });
 
         serverFileTree.setOnMouseClicked(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent mouseEvent) {
+                if (serverFileTree.getSelectionModel().getSelectedItem() == null){
+                    return;
+                }
                 refreshServFocused();
             }
         });
     }
+
     //TODO сделать так, что обновлялась только та директория, в которой произошло изменение.
     public void updateServFileTreeDir(String dirName) {
         Platform.runLater(() -> {
@@ -150,7 +188,125 @@ public class ExchangeController implements Initializable {
             serverFileTree.getRoot().setExpanded(true);
         });
     }
+    public void updateClientFileTreeDir(String dirName) {
+        Platform.runLater(() -> {
+            clientFileTree.setRoot(buildFileSystemBrowser("/").getRoot());
+            clientFileTree.getRoot().setExpanded(true);
+        });
+    }
 
+    synchronized public void createClientFolder() {
+        //TODO Добавить здесь обработку ситуации, когда создаётся папка с названием которое уже существует в данной директории
+        if (createFolderDialog.isVisible()){
+            return;
+        }
+        clientFileTree.setVisible(false);
+        createFolderDialog.setHeaderText("Folder name");
+        createFolderDialog.setPrefWidth(150);
+        createFolderDialog.setPrefHeight(100);
+        createFolderDialog.setLayoutX(mouseX);
+        createFolderDialog.setLayoutY(mouseY);
+        createFolderDialog.setVisible(true);
+        final Button okButton = (Button) createFolderDialog.lookupButton(ButtonType.OK);
+        final Button cancelButton = (Button) createFolderDialog.lookupButton(ButtonType.CANCEL);
+        okButton.addEventFilter(ActionEvent.ACTION, event ->
+        {
+            if (textField.getText().equals("")) {
+               return;
+            }
+            if (clientFileTreeFocus.getValue().isDirectory()) {
+                try {
+                    System.out.println(clientFileTreeFocus.getValue().getAbsolutePath() + "\\" + textField.getText());
+                    Files.createDirectory(Path.of(clientFileTreeFocus.getValue().getAbsolutePath() + "\\" + textField.getText()));
+                    updateClientFileTreeDir(clientFileTreeFocus.getValue().getAbsolutePath());
+                    createFolderDialog.setVisible(false);
+                    clientFileTree.setVisible(true);
+                    textField.clear();
+                    event.consume();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }finally {
+                    clientFileTree.setVisible(true);
+                    textField.clear();
+                }
+            }else{
+                try {
+                    Files.createDirectory(Path.of(clientFileTreeFocus.getValue().getAbsolutePath() + "\\" + textField.getText()));
+                    updateClientFileTreeDir(clientFileTreeFocus.getValue().getAbsolutePath());
+                    clientFileTree.setVisible(true);
+                    event.consume();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }finally {
+                    clientFileTree.setVisible(true);
+                    textField.clear();
+                }
+            }
+        });
+        cancelButton.addEventFilter(ActionEvent.ACTION, event ->
+        {
+            createFolderDialog.setVisible(false);
+            clientFileTree.setVisible(true);
+            textField.clear();
+            event.consume();
+        });
+    }
+
+    synchronized public void createServerFolder() {
+        //TODO Добавить здесь обработку ситуации, когда создаётся папка с названием которое уже существует в данной директории
+        if (createFolderDialog.isVisible()){
+            return;
+        }
+        serverFileTree.setVisible(false);
+        createFolderDialog.setHeaderText("Folder name");
+        createFolderDialog.setPrefWidth(150);
+        createFolderDialog.setPrefHeight(100);
+        createFolderDialog.setLayoutX(mouseX + clientFileTree.getWidth());
+        createFolderDialog.setLayoutY(mouseY);
+        createFolderDialog.setVisible(true);
+        final Button okButton = (Button) createFolderDialog.lookupButton(ButtonType.OK);
+        final Button cancelButton = (Button) createFolderDialog.lookupButton(ButtonType.CANCEL);
+        okButton.addEventFilter(ActionEvent.ACTION, event ->
+        {
+            if (textField.getText().equals("")) {
+                return;
+            }
+            if (serverFileTreeFocus.getValue().isDirectory()) {
+                try {
+                    os.writeObject(new CreateDirectory(serverFileTreeFocus.getValue().getAbsolutePath() + "\\" + textField.getText()));
+                    updateServFileTreeDir(serverFileTreeFocus.getValue().getAbsolutePath());
+                    createFolderDialog.setVisible(false);
+                    serverFileTree.setVisible(true);
+                    textField.clear();
+                    event.consume();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }finally {
+                    serverFileTree.setVisible(true);
+                    textField.clear();
+                }
+            }else{
+                try {
+                    Files.createDirectory(Path.of(serverFileTreeFocus.getValue().getAbsolutePath() + "\\" + textField.getText()));
+                    updateClientFileTreeDir(serverFileTreeFocus.getValue().getAbsolutePath());
+                    serverFileTree.setVisible(true);
+                    event.consume();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }finally {
+                    serverFileTree.setVisible(true);
+                    textField.clear();
+                }
+            }
+        });
+        cancelButton.addEventFilter(ActionEvent.ACTION, event ->
+        {
+            createFolderDialog.setVisible(false);
+            serverFileTree.setVisible(true);
+            textField.clear();
+            event.consume();
+        });
+    }
 
     public void updateServFileTreeFull() {
         TreeItem<File> selected = serverFileTree.getSelectionModel().getSelectedItem();
@@ -168,18 +324,17 @@ public class ExchangeController implements Initializable {
     public void deleteServerFile() {
         refreshServFocused();
         try {
-            os.writeObject(new DeleteRequest(serverFocusedFileView.getValue().getAbsolutePath()));
-            updateServFileTreeDir(serverFocusedFileView.getValue().getParent());
+            os.writeObject(new DeleteRequest(serverFileTreeFocus.getValue().getAbsolutePath()));
+            updateServFileTreeDir(serverFileTreeFocus.getValue().getParent());
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     private void refreshServFocused() {
-        if (serverFileTree.getSelectionModel().getSelectedItem() == null) return;
         try {
-            serverFocusedFileView = serverFileTree.getSelectionModel().getSelectedItem();
-            os.writeObject(new FocusResponse(serverFocusedFileView.getValue().getAbsolutePath()));
+            serverFileTreeFocus = serverFileTree.getSelectionModel().getSelectedItem();
+            os.writeObject(new FocusResponse(serverFileTreeFocus.getValue().getAbsolutePath()));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -234,7 +389,7 @@ public class ExchangeController implements Initializable {
                                 serverRootPath = pathResponse.getPath();
                                 Platform.runLater(() -> {
                                     serverFileTree.setRoot(buildFileSystemBrowser(serverRootPath).getRoot());
-                                    serverFocusedFileView = serverFileTree.getRoot();
+                                    serverFileTreeFocus = serverFileTree.getRoot();
                                 });
                                 break;
                             case FILE_MESSAGE:
