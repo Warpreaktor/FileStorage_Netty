@@ -397,7 +397,12 @@ public class ExchangeController implements Initializable {
                         switch (command.getType()) {
                             case USER_INFO:
                                 UserInfo userInfo = (UserInfo) command;
-                                authLabel.setText(userInfo.getInfo());
+                                Platform.runLater(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        authLabel.setText(userInfo.getInfo());
+                                    }
+                                });
                                 break;
                             case LIST_MESSAGE:
                                 ListResponse response = (ListResponse) command;

@@ -80,7 +80,7 @@ public class AuthService {
             String sqlRequest = String.format("SELECT " +
                     "account, password " +
                     "FROM users " +
-                    "WHERE login = '%s' AND password = '%s' ;", account, pass);
+                    "WHERE account = '%s' AND password = '%s' ;", account, pass);
             ResultSet resultSet = statement.executeQuery(sqlRequest);
             int myHash = pass.hashCode();
             if (resultSet.next()) {
@@ -89,6 +89,22 @@ public class AuthService {
                // if (myHash == dbHash) {
                 return acc;
                 //}
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+    public static String checkAccount(String account) {
+        try {
+            String sqlRequest = String.format("SELECT " +
+                    "account " +
+                    "FROM users " +
+                    "WHERE account = '%s';", account);
+            ResultSet resultSet = statement.executeQuery(sqlRequest);
+            if (resultSet.next()) {
+                String acc = resultSet.getString(1);
+                return acc;
             }
         } catch (SQLException e) {
             e.printStackTrace();

@@ -41,7 +41,7 @@ public class MessageHandler extends SimpleChannelInboundHandler<AbstractCommand>
                 }
             case ADD_ACCOUNT:
                 AddAccount addAccount = (AddAccount) command;
-                if (AuthService.getAccount(addAccount.getAccount(), addAccount.getPassword()) == null){
+                if (AuthService.checkAccount(addAccount.getAccount()) == null){
                     userRootPath = Path.of(rootDir + addAccount.getAccount());
                     AuthService.addAccount(addAccount.getAccount(), addAccount.getPassword(), userRootPath.toString());
                     Files.createDirectory(Path.of(rootDir + addAccount.getAccount()));
