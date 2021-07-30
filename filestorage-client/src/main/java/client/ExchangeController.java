@@ -86,10 +86,6 @@ public class ExchangeController implements Initializable {
     MenuItem copyFileToServer;
     @FXML
     MenuItem sendFileToServer;
-    @FXML
-    MenuItem createFolder;
-    @FXML
-    MenuItem deleteServerFile;
 
     Socket socket;
     int bufferSize = 1024000;
@@ -366,6 +362,7 @@ public class ExchangeController implements Initializable {
     }
 
     public void connectButton() {
+        serverFileTree.setVisible(false);
         if (connectToServer()) {
             authPanel.setVisible(true);
         }
@@ -414,12 +411,11 @@ public class ExchangeController implements Initializable {
                                 AuthenticationComplete AuthenticationComplete = (AuthenticationComplete) command;
                                 serverRootPath = AuthenticationComplete.getRootPath();
                                 Platform.runLater(() -> {
-                                    System.out.println("root = " + serverRootPath);
                                     serverFileTree.setRoot(buildFileSystemBrowser(serverRootPath).getRoot());
                                     serverFileTreeFocus = serverFileTree.getRoot();
+                                    serverFileTree.getRoot().setExpanded(true);
                                     authPanel.setVisible(false);
                                     serverFileTree.setVisible(true);
-                                    updateServFileTreeDir(serverRootPath);
                                 });
                                 break;
                             case FILE_MESSAGE:
