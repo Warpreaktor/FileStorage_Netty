@@ -453,8 +453,6 @@ public class ExchangeController implements Initializable {
     //Событие при нажатии на кнопку Sign up на экране авторизации
     public void tryAddUser(ActionEvent actionEvent) {
         try {
-            //TODO Сделать нормальную форму аутентификации, чтобы пользователь мог ввести и свой ник нейм
-            //Повторяется логин для того чтобы в базу данных записать и ник который будет равен логину
             os.writeObject(new AddAccount(loginField.getText(), passwordField.getText()));
             loginField.clear();
             passwordField.clear();

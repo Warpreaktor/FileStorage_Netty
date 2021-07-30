@@ -50,11 +50,14 @@ public class AuthService {
         }
     }
 
-    public static void addUser(String account, String pass) throws SQLException{
+    public static void addAccount(String account, String pass, String root) throws SQLException{
         String acc = getAccount(account, pass);
         if (acc == null){
             try {
-                String sqlRequest = String.format("INSERT INTO users (account, password) VALUES ('%s', '%s');", account, pass);
+                String sqlRequest = String.format("INSERT INTO users " +
+                        "(account, password, root_directory) " +
+                        "VALUES " +
+                        "('%s', '%s', '%s');", account, pass, root);
                 PreparedStatement ps = connection.prepareStatement(sqlRequest);
                 ps.executeUpdate();
             } catch (SQLException e) {
@@ -68,6 +71,10 @@ public class AuthService {
         }
     }
 
+    /**
+     * Метод возвращает аккаунт, только при полном совпадении пароли и аккаунта переданного в параметрах
+     * @return String или null если пользователь не найден
+     */
     public static String getAccount(String account, String pass) {
         try {
             String sqlRequest = String.format("SELECT " +
@@ -77,10 +84,10 @@ public class AuthService {
             ResultSet resultSet = statement.executeQuery(sqlRequest);
             int myHash = pass.hashCode();
             if (resultSet.next()) {
-                String nick = resultSet.getString(1);
+                String acc = resultSet.getString(1);
                 //int dbHash = rs.getInt(2);
                // if (myHash == dbHash) {
-                return nick;
+                return acc;
                 //}
             }
         } catch (SQLException e) {

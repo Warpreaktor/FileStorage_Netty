@@ -13,7 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 
 public class MessageHandler extends SimpleChannelInboundHandler<AbstractCommand> {
-
+    private final String rootDir = "O:\\Tests\\";
     private Path userRootPath;
     //TODO Нужно сделать тут массив с именами файлов, так как пользователь может выделить сразу несколько файлов.
     private String currentFocus; // Информация о том, какой конкретно файл сейчас выделен у пользователя
@@ -39,6 +39,17 @@ public class MessageHandler extends SimpleChannelInboundHandler<AbstractCommand>
                     ctx.writeAndFlush(new AuthenticationComplete(userRootPath.toString()));
                     break;
                 }
+            case ADD_ACCOUNT:
+                AddAccount addAccount = (AddAccount) command;
+                if (AuthService.getAccount(addAccount.getAccount(), addAccount.getPassword()) == null){
+                    userRootPath = Path.of(rootDir + addAccount.getAccount());
+                    AuthService.addAccount(addAccount.getAccount(), addAccount.getPassword(), userRootPath.toString());
+                    Files.createDirectory(Path.of(rootDir + addAccount.getAccount()));
+                    ctx.writeAndFlush(new UserInfo("User " + addAccount.getAccount() + " registered"));
+                }else{
+                    ctx.writeAndFlush(new UserInfo("Account already exist"));
+                }
+                break;
             case FILE_REQUEST:
                 FileRequest fileRequest = (FileRequest) command;
                 FileMessage msg = new FileMessage(userRootPath.resolve(fileRequest.getFileName()));
