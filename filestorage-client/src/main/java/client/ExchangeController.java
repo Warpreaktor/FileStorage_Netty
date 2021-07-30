@@ -57,6 +57,8 @@ public class ExchangeController implements Initializable {
 
     //Серверная панель
     @FXML
+    Label authLabel;
+    @FXML
     VBox authPanel;
     @FXML
     TextField loginField;
@@ -393,6 +395,10 @@ public class ExchangeController implements Initializable {
                     while (true) {
                         AbstractCommand command = (AbstractCommand) is.readObject();
                         switch (command.getType()) {
+                            case USER_INFO:
+                                UserInfo userInfo = (UserInfo) command;
+                                authLabel.setText(userInfo.getInfo());
+                                break;
                             case LIST_MESSAGE:
                                 ListResponse response = (ListResponse) command;
                                 List<String> names = response.getNames();

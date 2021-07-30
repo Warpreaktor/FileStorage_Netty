@@ -3,6 +3,7 @@ package commands;
 public enum CommandType {
     AUTHENTICATION_REQUEST,
     ADD_ACCOUNT,
+    USER_INFO,
     FILE_REQUEST,
     FILE_MESSAGE,
     FILE_PART,

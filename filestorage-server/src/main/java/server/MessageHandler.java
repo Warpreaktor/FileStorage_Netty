@@ -30,10 +30,9 @@ public class MessageHandler extends SimpleChannelInboundHandler<AbstractCommand>
             case AUTHENTICATION_REQUEST:
                 AuthenticationRequest authentication = (AuthenticationRequest) command;
                 if (AuthService.authentication(authentication.getAccount(), authentication.getPassword()) == null){
-                    System.out.println("Account not exist");
+                    ctx.writeAndFlush(new UserInfo("Account not exist"));
                     break;
                 }else {
-                    System.out.println("Пользователь найден");
                     userRootPath = Paths.get("O:\\Tests\\" + authentication.getAccount());
                     currentFocus = userRootPath.toAbsolutePath().toString();
                     //Отправляем клиенту путь к корневому каталогу на сервере
