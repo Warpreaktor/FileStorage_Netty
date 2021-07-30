@@ -16,11 +16,13 @@ import lombok.extern.slf4j.Slf4j;
 public class ServerNetty {
 
     public static void main(String[] args) throws InterruptedException {
-        //EventLoopGroup работают в вечном цикле и их необходимо закрывать.
+        //EventLoopGroup работают в вечном цикле и их необходимо будет закрыть.
         EventLoopGroup auth = new NioEventLoopGroup(1);
         EventLoopGroup worker = new NioEventLoopGroup();
         //ServerBootstrap декоратор
         ServerBootstrap bootstrap = new ServerBootstrap();
+        //Подключаемся к базе данных
+        AuthService.connect();
         //bootstrap будет читать с Handler приходящие сообщения и заворачивать их в объекты.
         bootstrap.group(auth, worker)
                 .channel(NioServerSocketChannel.class)
@@ -37,8 +39,12 @@ public class ServerNetty {
         ChannelFuture future = bootstrap.bind(8189).sync();
         log.debug("Server started...");
         future.channel().closeFuture().sync();
+
         //Закрываем вечный цикл EventLoopGroup
         auth.shutdownGracefully();
         worker.shutdownGracefully();
+        //Закрываем соединение с базой данных
+        AuthService.disconnect();
+        log.debug("Server finished work...");
     }
 }

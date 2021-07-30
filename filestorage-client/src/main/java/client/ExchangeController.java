@@ -28,7 +28,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Date;
 import java.util.List;
 import java.util.ResourceBundle;
 
@@ -57,6 +56,16 @@ public class ExchangeController implements Initializable {
     TreeItem<File> clientFileTreeFocus;
 
     //Серверная панель
+    @FXML
+    VBox authPanel;
+    @FXML
+    TextField loginField;
+    @FXML
+    TextField passwordField;
+    @FXML
+    Button logIn;
+    @FXML
+    Button signUp;
     @FXML
     TextField serverConsole;
     @FXML
@@ -96,6 +105,7 @@ public class ExchangeController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+        authPanel.setVisible(false);
         clientFileTree.setRoot(buildFileSystemBrowser("/").getRoot());
         clientFileTreeFocus = clientFileTree.getRoot();
 
@@ -122,20 +132,7 @@ public class ExchangeController implements Initializable {
             }
         });
 
-        createTxtFile.setOnAction(new EventHandler<ActionEvent>() {
-            public void handle(ActionEvent e) {
-                String path = clientFileTree.getSelectionModel().getSelectedItems().get(0).getValue().getParent();
-                String fileExtension = "txt";
-                int incr = 0;
-                //TODO Перед созданием нового файла обойти папку и если такой уже есть, то создать новый с incr+1 в имени
-                try {
-                    File file = new File(path + "New text document" + "." + fileExtension);
-                    file.createNewFile();
-                } catch (IOException ioException) {
-                    ioException.printStackTrace();
-                }
-            }
-        });
+
         copyFileToServer.setOnAction(new EventHandler<ActionEvent>() {
             @SneakyThrows
             public void handle(ActionEvent e) {
@@ -147,7 +144,7 @@ public class ExchangeController implements Initializable {
                     os.writeObject(new FilePart(Paths.get(clientFile.getAbsolutePath()), true, false, rd));
                     while (true) {
                         rd = bis.readNBytes(bufferSize);
-                        if (rd.length < 1){
+                        if (rd.length < 1) {
                             os.writeObject(new FilePart(Paths.get(clientFile.getAbsolutePath()), false, true, rd));
                             os.flush();
                             break;
@@ -182,7 +179,7 @@ public class ExchangeController implements Initializable {
         serverFileTree.setOnMouseClicked(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent mouseEvent) {
-                if (serverFileTree.getSelectionModel().getSelectedItem() == null){
+                if (serverFileTree.getSelectionModel().getSelectedItem() == null) {
                     return;
                 }
                 refreshServFocused();
@@ -190,13 +187,31 @@ public class ExchangeController implements Initializable {
         });
     }
 
-    //TODO сделать так, что обновлялась только та директория, в которой произошло изменение.
+    public void createClientTxtFile() {
+        String path = clientFileTree.getSelectionModel().getSelectedItems().get(0).getValue().getParent();
+        String fileExtension = "txt";
+        int incr = 0;
+        //TODO Перед созданием нового файла обойти папку и если такой уже есть, то создать новый с incr+1 в имени
+        try {
+            File file = new File(path + "New text document" + "." + fileExtension);
+            file.createNewFile();
+        } catch (IOException ioException) {
+            ioException.printStackTrace();
+        }
+    }
+
+    public void createServerTxtFile() {
+
+    }
+
+    //TODO сделать так, что бы обновлялась только та директория, в которой произошло изменение.
     public void updateServFileTreeDir(String dirName) {
         Platform.runLater(() -> {
             serverFileTree.setRoot(buildFileSystemBrowser(serverRootPath).getRoot());
             serverFileTree.getRoot().setExpanded(true);
         });
     }
+
     public void updateClientFileTreeDir(String dirName) {
         Platform.runLater(() -> {
             clientFileTree.setRoot(buildFileSystemBrowser("/").getRoot());
@@ -206,7 +221,7 @@ public class ExchangeController implements Initializable {
 
     synchronized public void createClientFolder() {
         //TODO Добавить здесь обработку ситуации, когда создаётся папка с названием которое уже существует в данной директории
-        if (createFolderDialog.isVisible()){
+        if (createFolderDialog.isVisible()) {
             return;
         }
         clientFileTree.setVisible(false);
@@ -221,7 +236,7 @@ public class ExchangeController implements Initializable {
         okButton.addEventFilter(ActionEvent.ACTION, event ->
         {
             if (textField.getText().equals("")) {
-               return;
+                return;
             }
             if (clientFileTreeFocus.getValue().isDirectory()) {
                 try {
@@ -234,11 +249,11 @@ public class ExchangeController implements Initializable {
                     event.consume();
                 } catch (IOException e) {
                     e.printStackTrace();
-                }finally {
+                } finally {
                     clientFileTree.setVisible(true);
                     textField.clear();
                 }
-            }else{
+            } else {
                 try {
                     Files.createDirectory(Path.of(clientFileTreeFocus.getValue().getAbsolutePath() + "\\" + textField.getText()));
                     updateClientFileTreeDir(clientFileTreeFocus.getValue().getAbsolutePath());
@@ -246,7 +261,7 @@ public class ExchangeController implements Initializable {
                     event.consume();
                 } catch (IOException e) {
                     e.printStackTrace();
-                }finally {
+                } finally {
                     clientFileTree.setVisible(true);
                     textField.clear();
                 }
@@ -263,7 +278,7 @@ public class ExchangeController implements Initializable {
 
     synchronized public void createServerFolder() {
         //TODO Добавить здесь обработку ситуации, когда создаётся папка с названием которое уже существует в данной директории
-        if (createFolderDialog.isVisible()){
+        if (createFolderDialog.isVisible()) {
             return;
         }
         serverFileTree.setVisible(false);
@@ -290,11 +305,11 @@ public class ExchangeController implements Initializable {
                     event.consume();
                 } catch (IOException e) {
                     e.printStackTrace();
-                }finally {
+                } finally {
                     serverFileTree.setVisible(true);
                     textField.clear();
                 }
-            }else{
+            } else {
                 try {
                     Files.createDirectory(Path.of(serverFileTreeFocus.getValue().getAbsolutePath() + "\\" + textField.getText()));
                     updateClientFileTreeDir(serverFileTreeFocus.getValue().getAbsolutePath());
@@ -302,7 +317,7 @@ public class ExchangeController implements Initializable {
                     event.consume();
                 } catch (IOException e) {
                     e.printStackTrace();
-                }finally {
+                } finally {
                     serverFileTree.setVisible(true);
                     textField.clear();
                 }
@@ -349,7 +364,12 @@ public class ExchangeController implements Initializable {
     }
 
     public void connectButton() {
+        if (connectToServer()) {
+            authPanel.setVisible(true);
+        }
+    }
 
+    public boolean connectToServer() {
         if (socket != null) {
             try {
                 socket.close();
@@ -365,7 +385,6 @@ public class ExchangeController implements Initializable {
 
         try {
             socket = new Socket(ipAddress, port);
-
             os = new ObjectEncoderOutputStream(socket.getOutputStream());
             is = new ObjectDecoderInputStream(socket.getInputStream());
 
@@ -380,12 +399,16 @@ public class ExchangeController implements Initializable {
                                 System.out.println("Client got the List " + names);
                                 //refreshServerView(names);
                                 break;
-                            case PATH_RESPONSE:
-                                PathUpResponse pathResponse = (PathUpResponse) command;
-                                serverRootPath = pathResponse.getPath();
+                            case AUTHENTICATION_COMPLETE:
+                                AuthenticationComplete AuthenticationComplete = (AuthenticationComplete) command;
+                                serverRootPath = AuthenticationComplete.getRootPath();
                                 Platform.runLater(() -> {
+                                    System.out.println("root = " + serverRootPath);
                                     serverFileTree.setRoot(buildFileSystemBrowser(serverRootPath).getRoot());
                                     serverFileTreeFocus = serverFileTree.getRoot();
+                                    authPanel.setVisible(false);
+                                    serverFileTree.setVisible(true);
+                                    updateServFileTreeDir(serverRootPath);
                                 });
                                 break;
                             case FILE_MESSAGE:
@@ -400,9 +423,36 @@ public class ExchangeController implements Initializable {
                     e.printStackTrace();
                 }
             });
+
             readThread.setDaemon(true);
             readThread.start();
+            return true;
         } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    //Событие при нажатии на кнопку Log in на экране авторизации
+    public void tryAuth(ActionEvent actionEvent) {
+        try {
+            os.writeObject(new AuthenticationRequest(loginField.getText(), passwordField.getText()));
+            loginField.clear();
+            passwordField.clear();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    //Событие при нажатии на кнопку Sign up на экране авторизации
+    public void tryAddUser(ActionEvent actionEvent) {
+        try {
+            //TODO Сделать нормальную форму аутентификации, чтобы пользователь мог ввести и свой ник нейм
+            //Повторяется логин для того чтобы в базу данных записать и ник который будет равен логину
+            os.writeObject(new AddAccount(loginField.getText(), passwordField.getText()));
+            loginField.clear();
+            passwordField.clear();
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }

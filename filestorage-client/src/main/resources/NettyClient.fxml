@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ButtonType?>
 <?import javafx.scene.control.ContextMenu?>
 <?import javafx.scene.control.DialogPane?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.SeparatorMenuItem?>
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.TextField?>
@@ -76,7 +79,7 @@
                                 <items>
                                   <MenuItem fx:id="copyFileToServer" mnemonicParsing="false" text="Copy to server" />
                                     <MenuItem fx:id="sendFileToServer" mnemonicParsing="false" text="Send to server" />
-                                    <MenuItem fx:id="createTxtFile" mnemonicParsing="false" text="Create txt" />
+                                    <MenuItem fx:id="createTxtFile" mnemonicParsing="false" onAction="#createClientTxtFile" text="Create txt" />
                                     <MenuItem mnemonicParsing="false" onAction="#createClientFolder" text="Create folder" />
                                     <MenuItem fx:id="deleteClientFile" mnemonicParsing="false" text="Delete" />
                                 </items>
@@ -87,19 +90,35 @@
                   </AnchorPane>
                 <AnchorPane minHeight="0.0" minWidth="0.0">
                      <children>
-                        <TreeView fx:id="serverFileTree" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                        <TreeView fx:id="serverFileTree" prefWidth="203.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                          <contextMenu>
                              <ContextMenu fx:id="rightContextMenu">
                                  <items>
                                      <MenuItem mnemonicParsing="false" text="Copy to client" />
                                      <MenuItem mnemonicParsing="false" text="Send to client" />
-                                     <MenuItem mnemonicParsing="false" text="Create txt file" />
+                                     <MenuItem mnemonicParsing="false" onAction="#createServerTxtFile" text="Create txt" />
                                      <MenuItem mnemonicParsing="false" onAction="#createServerFolder" text="Create folder" />
                                      <MenuItem mnemonicParsing="false" onAction="#deleteServerFile" text="Delete" />
                                  </items>
                              </ContextMenu>
                          </contextMenu>
                         </TreeView>
+                        <VBox fx:id="authPanel" alignment="CENTER" AnchorPane.bottomAnchor="104.8" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="100.0">
+                           <children>
+                              <TextField fx:id="loginField" promptText="login" />
+                              <PasswordField fx:id="passwordField" promptText="password" />
+                              <HBox alignment="CENTER">
+                                 <children>
+                                    <Button fx:id="logIn" mnemonicParsing="false" onAction="#tryAuth" prefHeight="26.0" prefWidth="59.0" text="Log in" />
+                                    <Button fx:id="signUp" mnemonicParsing="false" onAction="#tryAddUser" text="Sign Up" />
+                                 </children>
+                                 <padding>
+                                    <Insets top="5.0" />
+                                 </padding>
+                              </HBox>
+                              <Label fx:id="textLabel" />
+                           </children>
+                        </VBox>
                      </children>
                   </AnchorPane>
               </items>

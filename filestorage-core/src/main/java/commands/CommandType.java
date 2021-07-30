@@ -1,6 +1,8 @@
 package commands;
 
 public enum CommandType {
+    AUTHENTICATION_REQUEST,
+    ADD_ACCOUNT,
     FILE_REQUEST,
     FILE_MESSAGE,
     FILE_PART,
@@ -9,7 +11,7 @@ public enum CommandType {
     DELETE_REQUEST,
     RENAME_REQUEST,
     PATH_UP,
-    PATH_RESPONSE,
+    AUTHENTICATION_COMPLETE,
     FOCUS_RESPONSE,
     FOCUS_REQUEST,
     PATH_IN_REQUEST,
