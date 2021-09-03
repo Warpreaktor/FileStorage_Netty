@@ -71,9 +71,10 @@ public class MessageHandler extends SimpleChannelInboundHandler<AbstractCommand>
                 currentFocus = focus.getFileName();
                 break;
             case FILE_PART: //передача файлов частями
-                //TODO реализовать передачу файлов через буфер с возможностью передавать большие файлы.
-                FilePart filePart = (FilePart) command;
+                //TODO здесь нужно как-то урегулировать ситуацию, когда пользователь может смнеить фокусировку и тем самым изменить путь доставки пакетов.
+                FilePartMessage filePart = (FilePartMessage) command;
                 if (filePart.isBegin()){
+                    System.out.println("FileMessage Begin. SIZE = " + filePart.getFullSize());
                     Files.write(Path.of(currentFocus).resolve(filePart.getName()), filePart.getData(), StandardOpenOption.CREATE_NEW);
                 }
                 if (!filePart.isBegin() && !filePart.isEnd()){
@@ -81,6 +82,7 @@ public class MessageHandler extends SimpleChannelInboundHandler<AbstractCommand>
                 }
                 if (filePart.isEnd()){
                     Files.write(Path.of(currentFocus).resolve(filePart.getName()), filePart.getData(), StandardOpenOption.APPEND);
+                    System.out.println("Total sended - " + filePart.getFullSize() + "; Total recieved - " + Path.of(currentFocus));
                 }
                 break;
             case CREATE_DIRECTORY:

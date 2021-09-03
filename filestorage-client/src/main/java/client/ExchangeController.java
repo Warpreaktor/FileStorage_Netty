@@ -11,6 +11,7 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Side;
+import javafx.scene.Group;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -41,6 +42,12 @@ public class ExchangeController implements Initializable {
     DialogPane createFolderDialog;
     @FXML
     TextField textField;
+    @FXML
+    Group copyGroup;
+    @FXML
+    Label copyGroupLabel;
+    @FXML
+    ProgressBar copyProgress;
 
     private double mouseX;
     private double mouseY;
@@ -139,20 +146,20 @@ public class ExchangeController implements Initializable {
                 File clientFile = clientFileTree.getSelectionModel().getSelectedItems().get(0).getValue().getAbsoluteFile();
                 try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(clientFile), bufferSize)) {
                     byte[] rd = bis.readNBytes(bufferSize);
-                    os.writeObject(new FilePart(Paths.get(clientFile.getAbsolutePath()), true, false, rd));
+                    os.writeObject(new FilePartMessage(Paths.get(clientFile.getAbsolutePath()), true, false, rd));
                     while (true) {
                         rd = bis.readNBytes(bufferSize);
                         if (rd.length < 1) {
-                            os.writeObject(new FilePart(Paths.get(clientFile.getAbsolutePath()), false, true, rd));
+                            os.writeObject(new FilePartMessage(Paths.get(clientFile.getAbsolutePath()), false, true, rd));
                             os.flush();
                             break;
                         }
                         if (rd.length < bufferSize) {
-                            os.writeObject(new FilePart(Paths.get(clientFile.getAbsolutePath()), false, true, rd));
+                            os.writeObject(new FilePartMessage(Paths.get(clientFile.getAbsolutePath()), false, true, rd));
                             os.flush();
                             break;
                         }
-                        os.writeObject(new FilePart(Paths.get(clientFile.getAbsolutePath()), false, false, rd));
+                        os.writeObject(new FilePartMessage(Paths.get(clientFile.getAbsolutePath()), false, false, rd));
                     }
                 } catch (IOException except) {
                     except.printStackTrace();
@@ -532,5 +539,18 @@ public class ExchangeController implements Initializable {
                 return FXCollections.emptyObservableList();
             }
         };
+    }
+
+    private void copyProgress(){
+        copyGroup.setVisible(true);
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                    //new CopyProgressRequest();
+                }
+            }
+        });
+
     }
 }

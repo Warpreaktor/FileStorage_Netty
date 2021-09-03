@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.Group?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ButtonType?>
 <?import javafx.scene.control.ContextMenu?>
@@ -10,6 +11,7 @@
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.ProgressBar?>
 <?import javafx.scene.control.SeparatorMenuItem?>
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.TextField?>
@@ -139,5 +141,11 @@
             <ButtonType fx:constant="CANCEL" />
          </buttonTypes>
       </DialogPane>
+      <Group fx:id="copyGroup" visible="false" AnchorPane.bottomAnchor="20.0" AnchorPane.leftAnchor="255.0" AnchorPane.rightAnchor="255.0">
+         <children>
+            <Label fx:id="copyGroupLabel" text="Label" />
+            <ProgressBar fx:id="copyProgress" prefWidth="200.0" progress="0.0" />
+         </children>
+      </Group>
    </children>
 </AnchorPane>
